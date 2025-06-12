@@ -1,13 +1,23 @@
-FROM python:3.13-slim-bullseye
+# Usar una imagen base ligera de Python
+FROM python:3.11-slim
 
+# Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
-COPY . /app
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    python3-dev \
-    && pip install -r requirements.txt \
-    && apt-get purge -y --auto-remove gcc python3-dev
+# Copiar primero los requirements para aprovechar el cache
+COPY requirements.txt .
 
+# Instalar dependencias
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar el resto de archivos del proyecto
 COPY . .
+
+# Exponer el puerto que Flask usará (Railway lo detecta)
+EXPOSE 5001
+
+# Establecer la variable de entorno para producción
+ENV FLASK_ENV=production
+
+# Comando de inicio del servidor Flask
+CMD ["python", "app.py"]
