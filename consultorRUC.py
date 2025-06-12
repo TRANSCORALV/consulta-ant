@@ -6,7 +6,7 @@ from datetime import datetime
 from utils import get_resource_path
 # Configuración de rutas
 
-DB_PATH = get_resource_path(os.path.join("db", "DB-CONSULTA.xlsx"))
+DB_PATH = os.path.join(os.getcwd(), "db", "DB-CONSULTA.xlsx")
 DESKTOP_PATH = os.path.join(os.path.expanduser("~"), "Desktop")  
 OUTPUT_DIR = os.path.join(DESKTOP_PATH, "consultas")  
 
