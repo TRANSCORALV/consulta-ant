@@ -69,7 +69,7 @@ def consultar_ruc():
                 row_data = [ruc] + row["cell"]
                 data_list.append(row_data)
 
-    # Si hay resultados, guardarlos en un archivo Excel
+    # Si hay resultados, guardarlos en un archivo Excel damian
     if data_list:
         column_names = ["RUC", "N. Citación", "# Infracción", "Entidad", "# Citación", "Placa", "Doc.",
                        "Fecha de emisión", "Fecha de notificación", "Limite de Pago", "Puntaje", "Col_L", "Col_M",
