@@ -3,26 +3,22 @@ import requests
 import os
 import re
 from datetime import datetime
-from utils import get_resource_path
-# Configuración de rutas
-DB_PATH = get_resource_path(os.path.join("db", "DB-CONSULTA.xlsx"))
-DESKTOP_PATH = os.path.join(os.path.expanduser("~"), "Desktop")  # Ruta al escritorio del usuario
-OUTPUT_DIR = os.path.join(DESKTOP_PATH, "consultas")  # Carpeta "consultas" en el escritorio
 
-# Crear la carpeta de consultas si no existe
+# Ruta del archivo Excel
+DB_PATH = os.path.join(os.getcwd(), "db", "DB-CONSULTA.xlsx")
+
+# Carpeta de salida accesible desde el servidor web
+OUTPUT_DIR = os.path.join(os.getcwd(), "static", "consultas")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# URL de la API
+# URL de la API de la ANT
 API_URL = "https://consultaweb.ant.gob.ec/PortalWEB/paginas/clientes/clp_json_citaciones.jsp"
 
 def consultar_api(placa):
-    """
-    Consulta la API para obtener información de multas por placa.
-    """
     params = {
         "ps_opcion": "P",
         "ps_id_contrato": "698880070",
-        "ps_id_persona": "19664470",  # 2987408 / 6052820 / 8789210 / 75062533 / 19664470
+        "ps_id_persona": "19664470",
         "ps_placa": placa,
         "ps_identificacion": placa,
         "ps_tipo_identificacion": "PLA",
@@ -49,16 +45,9 @@ def consultar_api(placa):
         return None
 
 def consultar_placa():
-    """
-    Función principal para consultar multas por placas.
-    """
-    # Leer el archivo Excel con las placas
     df = pd.read_excel(DB_PATH, sheet_name="PLACA", dtype=str)
-
-    # Lista para almacenar los resultados
     data_list = []
 
-    # Consultar cada placa
     for placa in df["PLACA"]:
         resultado = consultar_api(placa)
         if resultado:
@@ -66,23 +55,22 @@ def consultar_placa():
                 row_data = [placa] + row["cell"]
                 data_list.append(row_data)
 
-    # Si hay resultados, guardarlos en un archivo Excel
     if data_list:
         column_names = ["Placas", "N. Citación", "# Infracción", "Entidad", "# Citación", "Placa", "Doc.",
-                       "Fecha de emisión", "Fecha de notificación", "Limite de Pago", "Puntaje", "Col_L", "Col_M",
-                       "Col_N", "Sanción", "Multa", "Remisión", "Total a pagar", "Artículo/Literal", "Col_T", "Col_U"]
+                        "Fecha de emisión", "Fecha de notificación", "Limite de Pago", "Puntaje", "Col_L", "Col_M",
+                        "Col_N", "Sanción", "Multa", "Remisión", "Total a pagar", "Artículo/Literal", "Col_T", "Col_U"]
 
         df_resultado = pd.DataFrame(data_list, columns=column_names[:len(data_list[0])], dtype=str)
-
-        # Eliminar columnas innecesarias
         df_resultado = df_resultado.loc[:, ~df_resultado.columns.str.match(r'^Col_[A-Z]$')]
 
-        # Guardar el archivo
         fecha_actual = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_file = os.path.join(OUTPUT_DIR, f"PLA-CON-{fecha_actual}.xlsx")
-        df_resultado = df_resultado.astype(str)
-        df_resultado.to_excel(output_file, index=False)
+        filename = f"PLA-CON-{fecha_actual}.xlsx"
+        output_path = os.path.join(OUTPUT_DIR, filename)
+        df_resultado.to_excel(output_path, index=False)
 
-        return {"success": True, "message": f"Consulta completada. Archivo guardado en: {output_file}"}
+        # URL pública del archivo
+        download_url = f"/static/consultas/{filename}"
+
+        return {"success": True, "download_url": download_url, "message": "Consulta completada con éxito."}
     else:
         return {"success": False, "message": "No se encontraron placas con multas."}
